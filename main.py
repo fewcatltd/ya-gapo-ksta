@@ -17,16 +17,24 @@ def save_gapo_state(state):
 def load_gapo_state():
     try:
         with open(GAP_FILE, 'r') as file:
-            return json.load(file)
+            data = json.load(file)
+            current_gapo = data.get('current_gapo')
+            gapo_expiry_str = data.get('gapo_expiry')
+            if gapo_expiry_str:
+                try:
+                    gapo_expiry = datetime.datetime.fromisoformat(gapo_expiry_str)
+                except ValueError:
+                    gapo_expiry = datetime.datetime.now(pytz.timezone('Asia/Yekaterinburg'))
+            else:
+                gapo_expiry = datetime.datetime.now(pytz.timezone('Asia/Yekaterinburg'))
+            return current_gapo, gapo_expiry
     except (FileNotFoundError, json.JSONDecodeError):
-        return None, None
+        return None, datetime.datetime.now(pytz.timezone('Asia/Yekaterinburg'))
 
 
 current_gapo, gapo_expiry = load_gapo_state()
 
-if gapo_expiry:
-    gapo_expiry = datetime.datetime.fromisoformat(gapo_expiry)
-else:
+if not gapo_expiry:
     gapo_expiry = datetime.datetime.now(pytz.timezone('Asia/Yekaterinburg'))
 
 # Список ответных сообщений, когда уже есть Гапо
